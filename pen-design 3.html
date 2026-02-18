@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' data:; img-src 'self' data:; font-src 'self' data: https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;">
+<title>Lineage Pen — Interactive</title>
+<style>
+/* ── FONTS: embedded fallback stack ── */
+* { font-family: 'Georgia', 'Tahoma', 'Angsana New', serif; }
+.sans { font-family: 'Tahoma', 'Arial', sans-serif; }
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#1a1208;--cream:#f7f3ec;--gold:#c9a84c;--gold-light:#e8d5a0;
+  --silver:#a8b4be;
+}
+body{background:var(--cream);font-family:'Tahoma','Sarabun','Arial',sans-serif;color:var(--ink);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:0;opacity:.5}
+
+.serif{font-family:'Georgia','Times New Roman',serif;}
+
+.page{max-width:1100px;margin:0 auto;padding:48px 28px;position:relative;z-index:1}
+
+header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:60px;border-bottom:1px solid var(--gold);padding-bottom:20px}
+.brand{font-family:'Georgia',serif;font-size:13px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold)}
+.sub{font-size:11px;letter-spacing:.15em;color:var(--silver);margin-top:4px;font-family:Tahoma,Arial,sans-serif}
+
+.hero{display:grid;grid-template-columns:1fr 280px 1fr;gap:40px;align-items:start;margin-bottom:80px}
+
+.feat-col{display:flex;flex-direction:column;gap:12px}
+.feat-btn{background:white;border:1px solid var(--gold-light);border-radius:12px;padding:16px 18px;cursor:pointer;text-align:left;transition:all .25s;position:relative;overflow:hidden}
+.feat-btn::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--gold);transform:scaleY(0);transition:transform .25s;transform-origin:bottom}
+.feat-btn:hover,.feat-btn.active{border-color:var(--gold);box-shadow:0 4px 24px rgba(201,168,76,.15)}
+.feat-btn:hover::before,.feat-btn.active::before{transform:scaleY(1)}
+.feat-icon{font-size:18px;margin-bottom:5px;display:block}
+.feat-title{font-family:'Georgia',serif;font-size:17px;color:var(--ink);margin-bottom:3px}
+.feat-short{font-size:12px;color:#8a7a60;font-family:Tahoma,Arial,sans-serif}
+.feat-arrow{position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--gold);font-size:16px;opacity:0;transition:opacity .2s}
+.feat-btn:hover .feat-arrow,.feat-btn.active .feat-arrow{opacity:1}
+
+.detail-panel{background:white;border:1px solid var(--gold);border-radius:12px;padding:18px;animation:slideDown .3s ease}
+@keyframes slideDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.detail-panel h3{font-family:'Georgia',serif;font-size:19px;margin-bottom:8px}
+.detail-panel p{font-size:13px;line-height:1.8;color:#5a4e3a;font-family:Tahoma,Arial,sans-serif}
+.detail-panel ul{margin-top:10px;padding-left:0;list-style:none}
+.detail-panel ul li{font-size:12px;color:#5a4e3a;padding:3px 0 3px 14px;position:relative;line-height:1.6;font-family:Tahoma,Arial,sans-serif}
+.detail-panel ul li::before{content:'◆';position:absolute;left:0;font-size:6px;color:var(--gold);top:7px}
+
+.pen-stage{display:flex;flex-direction:column;align-items:center;gap:14px}
+.pen-title{font-family:'Georgia',serif;font-size:12px;letter-spacing:.25em;text-transform:uppercase;color:var(--silver);text-align:center}
+.canvas-wrap{position:relative;width:160px;height:460px;cursor:grab;user-select:none}
+.canvas-wrap:active{cursor:grabbing}
+.rotate-hint{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--silver);font-family:Tahoma,Arial,sans-serif}
+.click-hint{font-size:12px;color:var(--gold);text-align:center;font-family:Tahoma,Arial,sans-serif;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+
+.ink-control{width:100%;display:flex;flex-direction:column;gap:6px;align-items:center}
+.ink-label{font-size:11px;color:var(--silver);font-family:Tahoma,Arial,sans-serif;letter-spacing:.05em}
+.ink-slider{width:140px;accent-color:var(--gold);cursor:pointer}
+
+.spec-col{display:flex;flex-direction:column;gap:12px}
+.spec-card{background:white;border:1px solid var(--gold-light);border-radius:12px;padding:16px 18px}
+.spec-card-title{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--silver);margin-bottom:12px;font-family:Tahoma,Arial,sans-serif}
+.spec-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #f0e8d5;font-size:13px}
+.spec-row:last-child{border:none}
+.spec-key{color:#8a7a60;font-family:Tahoma,Arial,sans-serif}
+.spec-val{font-family:'Georgia',serif;font-size:15px}
+.palette-row{display:flex;gap:8px;flex-wrap:wrap}
+.swatch{width:28px;height:28px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .2s}
+.swatch:hover,.swatch.active{border-color:var(--gold);transform:scale(1.15)}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(20,15,5,.75);backdrop-filter:blur(6px);z-index:1000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--cream);border:1px solid var(--gold);border-radius:20px;padding:44px 36px;max-width:540px;width:92%;position:relative;transform:scale(.93);transition:transform .3s;max-height:90vh;overflow-y:auto}
+.modal-overlay.open .modal{transform:scale(1)}
+.modal-close{position:absolute;top:16px;right:18px;background:none;border:none;font-size:22px;color:var(--silver);cursor:pointer;line-height:1}
+.modal-close:hover{color:var(--ink)}
+.modal h2{font-family:'Georgia',serif;font-size:30px;font-weight:400;margin-bottom:4px;line-height:1.2}
+.modal h2 em{font-style:italic;color:var(--gold)}
+.modal-sub{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--silver);margin-bottom:28px;font-family:Tahoma,Arial,sans-serif}
+.how-step{display:flex;gap:14px;margin-bottom:18px;align-items:flex-start}
+.step-num{width:30px;height:30px;border:1px solid var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Georgia',serif;font-size:15px;color:var(--gold);flex-shrink:0;margin-top:2px}
+.step-body h4{font-size:14px;font-weight:700;margin-bottom:3px;font-family:Tahoma,Arial,sans-serif}
+.step-body p{font-size:13px;color:#6e5f46;line-height:1.7;font-family:Tahoma,Arial,sans-serif}
+.modal-note{margin-top:20px;padding:13px 15px;background:#f0e8d5;border-radius:8px;font-size:12px;color:#6e5f46;line-height:1.7;font-family:Tahoma,Arial,sans-serif}
+
+@media(max-width:780px){
+  .hero{grid-template-columns:1fr}
+  .pen-stage{order:-1}
+  .canvas-wrap{width:120px;height:360px}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<header>
+  <div>
+    <div class="brand">Lineage Pen Co.</div>
+    <div class="sub">Interactive Design Concept · 2025</div>
+  </div>
+  <div class="sub">หมุนได้ · กดเพื่อดูรายละเอียด</div>
+</header>
+
+<div class="hero">
+
+  <div class="feat-col" id="featCol">
+    <div class="feat-btn" onclick="showDetail('grip')" id="btn-grip">
+      <span class="feat-icon">◈</span>
+      <div class="feat-title">ด้ามเล็กกะทัดรัด</div>
+      <div class="feat-short">เส้นผ่านศูนย์กลาง 9mm</div>
+      <span class="feat-arrow">→</span>
+    </div>
+    <div class="feat-btn" onclick="showDetail('transparent')" id="btn-transparent">
+      <span class="feat-icon">◎</span>
+      <div class="feat-title">ตัวด้ามใสทันสมัย</div>
+      <div class="feat-short">เห็นไส้หมึกด้านใน</div>
+      <span class="feat-arrow">→</span>
+    </div>
+    <div class="feat-btn" onclick="showDetail('rubber')" id="btn-rubber">
+      <span class="feat-icon">◉</span>
+      <div class="feat-title">กริปยางนุ่ม</div>
+      <div class="feat-short">Silicone rubber texture</div>
+      <span class="feat-arrow">→</span>
+    </div>
+    <div class="feat-btn" onclick="showDetail('tip')" id="btn-tip">
+      <span class="feat-icon">✦</span>
+      <div class="feat-title">หัวแหลม 0.4mm</div>
+      <div class="feat-short">Tungsten carbide</div>
+      <span class="feat-arrow">→</span>
+    </div>
+    <div class="feat-btn" onclick="showDetail('ink')" id="btn-ink">
+      <span class="feat-icon">∿</span>
+      <div class="feat-title">หมึกลื่นไหล</div>
+      <div class="feat-short">Low-viscosity oil ink</div>
+      <span class="feat-arrow">→</span>
+    </div>
+    <div id="detailPanel" style="display:none"></div>
+  </div>
+
+  <div class="pen-stage">
+    <div class="pen-title serif">หมุนเพื่อดู 360°</div>
+    <div class="canvas-wrap" id="canvasWrap">
+      <canvas id="penCanvas" width="160" height="460"></canvas>
+    </div>
+    <div class="rotate-hint">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 12c0-4.418 3.582-8 8-8s8 3.582 8 8"/><path d="M20 12l-2-2m2 2l2-2"/></svg>
+      ลากซ้าย-ขวาเพื่อหมุน
+    </div>
+    <div class="ink-control">
+      <div class="ink-label">ปริมาณหมึก — ลองเลื่อนดู</div>
+      <input class="ink-slider" type="range" min="0" max="100" value="70" oninput="setInkLevel(this.value)" id="inkSlider">
+    </div>
+    <div class="click-hint">👆 กดที่ปากกาเพื่อดูวิธีใช้</div>
+  </div>
+
+  <div class="spec-col">
+    <div class="spec-card">
+      <div class="spec-card-title">ข้อมูลจำเพาะ</div>
+      <div class="spec-row"><span class="spec-key">ความยาว</span><span class="spec-val">138 mm</span></div>
+      <div class="spec-row"><span class="spec-key">เส้นผ่านศูนย์กลาง</span><span class="spec-val">9 mm</span></div>
+      <div class="spec-row"><span class="spec-key">น้ำหนัก</span><span class="spec-val">14 g</span></div>
+      <div class="spec-row"><span class="spec-key">หัวปากกา</span><span class="spec-val">0.4 mm</span></div>
+      <div class="spec-row"><span class="spec-key">ตัวด้าม</span><span class="spec-val">Polycarbonate ใส</span></div>
+      <div class="spec-row"><span class="spec-key">กริป</span><span class="spec-val">Silicone</span></div>
+      <div class="spec-row"><span class="spec-key">หมึก</span><span class="spec-val">Oil-based</span></div>
+    </div>
+    <div class="spec-card">
+      <div class="spec-card-title">สีหมึกที่มีให้เลือก</div>
+      <div class="palette-row">
+        <div class="swatch active" style="background:#1a3a6e" onclick="setInkColor('#1a3a6e','#2a5aae',this)" title="Navy Blue"></div>
+        <div class="swatch" style="background:#1a1208" onclick="setInkColor('#1a1208','#333',this)" title="Classic Black"></div>
+        <div class="swatch" style="background:#8b1a1a" onclick="setInkColor('#8b1a1a','#c03030',this)" title="Deep Red"></div>
+        <div class="swatch" style="background:#1a5c1a" onclick="setInkColor('#1a5c1a','#2a8a2a',this)" title="Forest Green"></div>
+        <div class="swatch" style="background:#6a1a8b" onclick="setInkColor('#6a1a8b','#9a3ac0',this)" title="Purple"></div>
+      </div>
+    </div>
+    <div class="spec-card">
+      <div class="spec-card-title">วัสดุพิเศษ</div>
+      <div class="spec-row"><span class="spec-key">ตัวด้าม</span><span class="spec-val">PC ใสกันรอย</span></div>
+      <div class="spec-row"><span class="spec-key">แหวน</span><span class="spec-val">Matte gold</span></div>
+      <div class="spec-row"><span class="spec-key">ฝา</span><span class="spec-val">Click-lock ใส</span></div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay" onclick="handleOverlayClick(event)">
+  <div class="modal" id="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h2>วิธีใช้<br><em>Lineage Pen</em></h2>
+    <div class="modal-sub">คู่มือการใช้งาน · ฉบับสมบูรณ์</div>
+    <div class="how-step">
+      <div class="step-num">1</div>
+      <div class="step-body"><h4>เปิดฝาปากกา</h4><p>กดฝาที่ด้านบนลงเบาๆ จนได้ยินเสียง "คลิก" แสดงว่าพร้อมใช้งาน ทำได้ด้วยมือเดียว</p></div>
+    </div>
+    <div class="how-step">
+      <div class="step-num">2</div>
+      <div class="step-body"><h4>ตรวจเช็คหมึกก่อนใช้</h4><p>มองผ่านตัวด้ามใสได้เลย เห็นระดับหมึกข้างในชัดเจน ถ้าเหลือน้อยกว่า ¼ ควรเปลี่ยนไส้ใหม่</p></div>
+    </div>
+    <div class="how-step">
+      <div class="step-num">3</div>
+      <div class="step-body"><h4>จับปากกาและเขียน</h4><p>วางนิ้วโป้ง นิ้วชี้ และนิ้วกลางบน <strong>กริปยางนุ่ม</strong> เอียง 45–60 องศา หมึกไหลลื่นไม่ต้องกดแรง</p></div>
+    </div>
+    <div class="how-step">
+      <div class="step-num">4</div>
+      <div class="step-body"><h4>ปิดฝาหลังใช้งาน</h4><p>กดฝากลับเข้าที่จนได้ยิน "คลิก" ป้องกันหมึกแห้ง เก็บได้ทั้งในกระเป๋าและช่องปากกา</p></div>
+    </div>
+    <div class="modal-note">💡 <strong>เคล็ดลับ:</strong> ถ้าหมึกสะดุดหลังเก็บนาน ให้ขีดวนบนกระดาษทดสัก 2–3 วง หมึกจะไหลปกติทันที</div>
+  </div>
+</div>
+
+<script>
+// ── CANVAS PEN ──
+var canvas = document.getElementById('penCanvas');
+var ctx = canvas.getContext('2d');
+var W = canvas.width, H = canvas.height;
+var angle = 0, isDragging = false, lastX = 0;
+var inkLevel = 0.70;
+var inkColor1 = '#1a3a6e', inkColor2 = '#2a5aae';
+var autoRotating = true;
+var raf;
+
+function drawPen(a) {
+  ctx.clearRect(0, 0, W, H);
+  var cx = W / 2;
+  var perspective = Math.cos(a);
+  var absP = Math.abs(perspective);
+
+  var bodyW = 22 + absP * 3;
+  var gripW = 20 + absP * 2;
+
+  var capT=18,capH=12,bodyT=30,bodyH=130;
+  var ring1T=160,ring1H=6,gripT=166,gripH=72;
+  var ring2T=238,ring2H=5,coneT=243,coneH=50;
+  var tipT=293,tipH=26,pointT=319;
+
+  var tubeW = bodyW * 0.45;
+  var inkH = (bodyH - 8) * inkLevel;
+  var inkFillTop = bodyT + 4 + (bodyH - 8) - inkH;
+
+  function goldG(x,w){
+    var g=ctx.createLinearGradient(x-w/2,0,x+w/2,0);
+    g.addColorStop(0,'#8a6020');g.addColorStop(0.3,'#e8d088');
+    g.addColorStop(0.65,'#c9a84c');g.addColorStop(1,'#9a7a2a');
+    return g;
+  }
+  function silverG(x,w){
+    var g=ctx.createLinearGradient(x-w/2,0,x+w/2,0);
+    g.addColorStop(0,'#777');g.addColorStop(0.4,'#e0e0e0');
+    g.addColorStop(0.7,'#aaa');g.addColorStop(1,'#888');
+    return g;
+  }
+  function glassG(x,w){
+    var g=ctx.createLinearGradient(x-w/2,0,x+w/2,0);
+    g.addColorStop(0,'rgba(200,220,255,0.25)');
+    g.addColorStop(0.2,'rgba(240,248,255,0.55)');
+    g.addColorStop(0.45,'rgba(255,255,255,0.70)');
+    g.addColorStop(0.6,'rgba(240,248,255,0.45)');
+    g.addColorStop(0.85,'rgba(200,220,255,0.20)');
+    g.addColorStop(1,'rgba(180,200,240,0.30)');
+    return g;
+  }
+  function rr(x,y,w,h,r,fill){
+    ctx.beginPath();
+    if(ctx.roundRect) ctx.roundRect(x-w/2,y,w,h,r);
+    else { ctx.rect(x-w/2,y,w,h); }
+    ctx.fillStyle=fill;ctx.fill();
+  }
+  function rrStroke(x,y,w,h,r,stroke,sw){
+    ctx.beginPath();
+    if(ctx.roundRect) ctx.roundRect(x-w/2,y,w,h,r);
+    else { ctx.rect(x-w/2,y,w,h); }
+    ctx.strokeStyle=stroke;ctx.lineWidth=sw;ctx.stroke();
+  }
+
+  // Clip
+  if(absP>0.1){
+    var cw=5*absP;
+    var cx2=perspective>0 ? cx+bodyW/2-cw/2+1 : cx-bodyW/2+cw/2-1;
+    ctx.beginPath();
+    if(ctx.roundRect) ctx.roundRect(cx2-cw/2,capT-2,cw,bodyH+capH+6,2);
+    else ctx.rect(cx2-cw/2,capT-2,cw,bodyH+capH+6);
+    ctx.fillStyle=goldG(cx2,cw);ctx.fill();
+    ctx.beginPath();ctx.ellipse(cx2,bodyT+bodyH+4,cw/2+1,cw/2+1,0,0,Math.PI*2);
+    ctx.fillStyle='#c9a84c';ctx.fill();
+  }
+
+  // Cap
+  rr(cx,capT,bodyW+3,capH,6,'rgba(220,235,255,0.6)');
+  rr(cx,capT,bodyW+3,capH,6,glassG(cx,bodyW+3));
+  rrStroke(cx,capT,bodyW+3,capH,6,'rgba(180,210,255,0.6)',0.8);
+  rr(cx,capT+capH-3,bodyW+3,3,0,goldG(cx,bodyW+3));
+
+  // Body bg
+  rr(cx,bodyT,bodyW,bodyH,4,'rgba(245,250,255,0.15)');
+
+  // Ink tube background
+  rr(cx,bodyT+4,tubeW+4,bodyH-8,3,'rgba(230,240,255,0.3)');
+
+  // Ink fill
+  if(inkLevel>0.01 && inkFillTop < bodyT+bodyH-4){
+    var realH = (bodyT+bodyH-4) - inkFillTop;
+    if(realH>0){
+      var ig=ctx.createLinearGradient(cx-tubeW/2,0,cx+tubeW/2,0);
+      ig.addColorStop(0,inkColor1);ig.addColorStop(0.5,inkColor2);ig.addColorStop(1,inkColor1);
+      ctx.beginPath();
+      if(ctx.roundRect) ctx.roundRect(cx-tubeW/2,inkFillTop,tubeW,realH,2);
+      else ctx.rect(cx-tubeW/2,inkFillTop,tubeW,realH);
+      ctx.fillStyle=ig;ctx.fill();
+      // shine
+      ctx.beginPath();
+      if(ctx.roundRect) ctx.roundRect(cx-tubeW/2+1,inkFillTop,tubeW*0.28,realH,1);
+      else ctx.rect(cx-tubeW/2+1,inkFillTop,tubeW*0.28,realH);
+      ctx.fillStyle='rgba(255,255,255,0.18)';ctx.fill();
+      // meniscus
+      ctx.beginPath();ctx.ellipse(cx,inkFillTop,tubeW/2,2.5,0,0,Math.PI*2);
+      ctx.fillStyle=inkColor2;ctx.fill();
+    }
+    // marks
+    for(var i=1;i<=3;i++){
+      var markY=bodyT+6+(bodyH-12)*i/4;
+      ctx.beginPath();ctx.moveTo(cx-tubeW/2-2,markY);ctx.lineTo(cx-tubeW/2+1,markY);
+      ctx.strokeStyle='rgba(180,200,220,0.6)';ctx.lineWidth=0.7;ctx.stroke();
+    }
+  }
+
+  // Glass overlay
+  rr(cx,bodyT,bodyW,bodyH,4,glassG(cx,bodyW));
+  // edge highlights
+  ctx.beginPath();if(ctx.roundRect)ctx.roundRect(cx-bodyW/2,bodyT,2,bodyH,4);else ctx.rect(cx-bodyW/2,bodyT,2,bodyH);
+  ctx.fillStyle='rgba(180,210,255,0.45)';ctx.fill();
+  ctx.beginPath();if(ctx.roundRect)ctx.roundRect(cx+bodyW/2-2,bodyT,2,bodyH,4);else ctx.rect(cx+bodyW/2-2,bodyT,2,bodyH);
+  ctx.fillStyle='rgba(180,210,255,0.30)';ctx.fill();
+  rrStroke(cx,bodyT,bodyW,bodyH,4,'rgba(180,215,255,0.55)',0.7);
+
+  // Ring 1
+  rr(cx,ring1T,bodyW+2,ring1H,2,goldG(cx,bodyW+2));
+
+  // Grip - frosted
+  var grg=ctx.createLinearGradient(cx-gripW/2,0,cx+gripW/2,0);
+  grg.addColorStop(0,'rgba(200,215,230,0.75)');
+  grg.addColorStop(0.3,'rgba(230,240,248,0.85)');
+  grg.addColorStop(0.6,'rgba(220,232,244,0.80)');
+  grg.addColorStop(1,'rgba(190,210,228,0.70)');
+  rr(cx,gripT,gripW,gripH,3,grg);
+  ctx.save();
+  ctx.beginPath();
+  if(ctx.roundRect)ctx.roundRect(cx-gripW/2,gripT,gripW,gripH,3);
+  else ctx.rect(cx-gripW/2,gripT,gripW,gripH);
+  ctx.clip();
+  ctx.strokeStyle='rgba(150,175,200,0.35)';ctx.lineWidth=0.8;
+  for(var y=gripT+7;y<gripT+gripH-4;y+=7){
+    ctx.beginPath();ctx.moveTo(cx-gripW/2,y);ctx.lineTo(cx+gripW/2,y);ctx.stroke();
+  }
+  ctx.restore();
+  rrStroke(cx,gripT,gripW,gripH,3,'rgba(180,210,240,0.6)',0.7);
+
+  // Ring 2
+  rr(cx,ring2T,bodyW+1,ring2H,2,goldG(cx,bodyW+1));
+
+  // Cone
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(cx-bodyW/2,coneT);ctx.lineTo(cx+bodyW/2,coneT);
+  ctx.lineTo(cx+6,tipT);ctx.lineTo(cx-6,tipT);ctx.closePath();
+  var icg=ctx.createLinearGradient(cx-bodyW/2,0,cx+bodyW/2,0);
+  icg.addColorStop(0,'rgba(200,220,255,0.3)');
+  icg.addColorStop(0.5,'rgba(240,248,255,0.5)');
+  icg.addColorStop(1,'rgba(200,220,255,0.25)');
+  ctx.fillStyle=icg;ctx.fill();
+  ctx.strokeStyle='rgba(180,210,255,0.5)';ctx.lineWidth=0.7;ctx.stroke();
+  ctx.restore();
+
+  // Tip
+  ctx.beginPath();
+  ctx.moveTo(cx-6,tipT);ctx.lineTo(cx+6,tipT);
+  ctx.lineTo(cx+2.5,pointT);ctx.lineTo(cx-2.5,pointT);ctx.closePath();
+  ctx.fillStyle=silverG(cx,12);ctx.fill();
+
+  // Point
+  ctx.beginPath();
+  ctx.moveTo(cx-2.5,pointT);ctx.lineTo(cx+2.5,pointT);ctx.lineTo(cx,pointT+12);ctx.closePath();
+  ctx.fillStyle='#ccc';ctx.fill();
+
+  // Shadow
+  var sg=ctx.createRadialGradient(cx,H-8,3,cx,H-8,40);
+  sg.addColorStop(0,'rgba(0,0,0,0.10)');sg.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.beginPath();ctx.ellipse(cx,H-8,25*absP+6,6,0,0,Math.PI*2);
+  ctx.fillStyle=sg;ctx.fill();
+}
+
+function loop(){
+  if(autoRotating) angle+=0.007;
+  drawPen(angle);
+  raf = requestAnimationFrame(loop);
+}
+loop();
+
+var wrap=document.getElementById('canvasWrap');
+wrap.addEventListener('mousedown',function(e){isDragging=true;autoRotating=false;lastX=e.clientX;});
+window.addEventListener('mousemove',function(e){if(!isDragging)return;angle+=(e.clientX-lastX)*0.013;lastX=e.clientX;});
+window.addEventListener('mouseup',function(){isDragging=false;});
+wrap.addEventListener('touchstart',function(e){isDragging=true;autoRotating=false;lastX=e.touches[0].clientX;},{passive:true});
+window.addEventListener('touchmove',function(e){if(!isDragging)return;angle+=(e.touches[0].clientX-lastX)*0.013;lastX=e.touches[0].clientX;},{passive:true});
+window.addEventListener('touchend',function(){isDragging=false;});
+wrap.addEventListener('click',function(){ openModal(); });
+
+window.setInkLevel=function(v){ inkLevel=v/100; };
+window.setInkColor=function(c1,c2,el){
+  inkColor1=c1;inkColor2=c2;
+  document.querySelectorAll('.swatch').forEach(function(s){s.classList.remove('active');});
+  el.classList.add('active');
+};
+
+var details={
+  grip:{title:'ด้ามเล็กกะทัดรัด',body:'เส้นผ่านศูนย์กลาง 9mm เพรียวลงจากเดิม ให้ความรู้สึกเหมือนถือดินสอ ควบคุมการเขียนได้แม่นยำขึ้น ไม่ล้ามือแม้เขียนนาน',list:['9mm พอดีนิ้ว ไม่ต้องถ่างหรือบีบ','น้ำหนัก 14g เบาและสมดุล','ทรงเพรียวดูทันสมัยและ minimal','ไม่กลิ้งตกโต๊ะเพราะทรงแบนเล็กน้อย']},
+  transparent:{title:'ตัวด้ามใส Polycarbonate',body:'วัสดุ Polycarbonate เกรดออปติคัล ใสกว่ากระจก มองเห็นไส้หมึกและระดับหมึกได้ชัดเจน ไม่ต้องเดาว่าหมึกใกล้หมดหรือยัง',list:['ใสระดับ 92% เห็นชัดทุกมุม','ไม่เหลืองหรือขุ่นแม้ใช้นานหลายปี','กันรอยขีดข่วนด้วยชั้น Hard Coat','เห็นระดับหมึกได้ทันทีโดยไม่ต้องเปิดฝา']},
+  rubber:{title:'กริปยางซิลิโคนนุ่ม',body:'ยางซิลิโคนโปร่งใสเล็กน้อย เข้ากับดีไซน์ใสของตัวด้าม ให้แรงฝืดพอดีทั้งมือแห้งและมือเปียก',list:['Silicone ใสเล็กน้อย เข้ากับดีไซน์','Texture เส้นตีระบายเหงื่อ','ลดแรงกดที่นิ้ว ไม่ล้ามือ','ยาว 70mm ครอบคลุมโซนจับทุกสไตล์']},
+  tip:{title:'หัวปากกา 0.4mm แหลมคม',body:'Tungsten Carbide 0.4mm ให้เส้นคมกว่า 0.5mm เหมาะทั้งจดบันทึก วาดแบบ และเซ็นชื่อ',list:['Tungsten Carbide แข็งกว่าเหล็ก 3 เท่า','ลูกบอลเซรามิค หมึกไหลสม่ำเสมอ','เส้น 0.4mm คมชัด อ่านง่ายทุกขนาด','ทนการกดแรง ไม่บุบงอง่าย']},
+  ink:{title:'หมึกลื่นไหลสูตรพิเศษ',body:'หมึกน้ำมัน Low-Viscosity เขียนลื่นเหมือนหมึกซึมแต่ไม่เลอะ มีให้เลือก 5 สี เห็นสีผ่านด้ามใสได้ด้วย',list:['แห้งใน 0.8 วิ ไม่เลอะมือ','กันน้ำเมื่อแห้ง 100%','1,200 เมตร ก่อนเปลี่ยนไส้','เห็นสีหมึกผ่านตัวด้ามใสได้ทันที']}
+};
+var currentDetail=null;
+window.showDetail=function(key){
+  var panel=document.getElementById('detailPanel');
+  var d=details[key];
+  document.querySelectorAll('.feat-btn').forEach(function(b){b.classList.remove('active');});
+  document.getElementById('btn-'+key).classList.add('active');
+  if(currentDetail===key){panel.style.display='none';currentDetail=null;return;}
+  currentDetail=key;
+  var li=d.list.map(function(i){return '<li>'+i+'</li>';}).join('');
+  panel.innerHTML='<div class="detail-panel"><h3>'+d.title+'</h3><p>'+d.body+'</p><ul>'+li+'</ul></div>';
+  panel.style.display='block';
+};
+
+window.openModal=function(){document.getElementById('modalOverlay').classList.add('open');};
+window.closeModal=function(){document.getElementById('modalOverlay').classList.remove('open');};
+window.handleOverlayClick=function(e){if(e.target===document.getElementById('modalOverlay'))closeModal();};
+</script>
+</body>
+</html>
